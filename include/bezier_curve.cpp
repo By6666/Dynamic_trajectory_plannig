@@ -5,7 +5,8 @@ void ThridOrderBezier(int pos_num, const std::vector<Point2d_type>& posset,
                       std::vector<DrawPathPos>& path) {
   double t = 0.0;
   double step_t = 1.0 / pos_num;
-  for (; t < 1 - step_t; t += step_t) {
+
+  for (int i = 0; i < pos_num; ++i) {
     DrawPathPos temp;
     temp.pt.x = ThridOrderBezierFormula(posset[0].x, posset[1].x, posset[2].x,
                                         posset[3].x, t);
@@ -17,5 +18,6 @@ void ThridOrderBezier(int pos_num, const std::vector<Point2d_type>& posset,
                      ThridOrderBezierDifferential(posset[0].x, posset[1].x,
                                                   posset[2].x, posset[3].x, t));
     path.push_back(temp);
+    t += step_t;
   }
 }

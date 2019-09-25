@@ -3,6 +3,7 @@ static int path_cnt = 0;
 
 /* 操作：
  *  s  : 开始
+ *  p  : pause
  *  r  ： 重新开始
  * Esc ： 退出
  *  */
@@ -18,10 +19,12 @@ void DrawWholeMap(int num, int row, int col, const Point2i_type& start,
 
   /* Path smooth bezier curve */
   std::vector<DrawPathPos> final_path;
-  PathSmooth(col, path, final_path);
+  CarPathSmooth(col, path, final_path);
+  std::vector<Obstacle> final_obs = obstacle;
+  ObsPathSmooth(final_obs);
 
   while (1) {
-    DrawGridMap(img, row, col, start, goal, obstacle);
+    DrawGridMap(img, row, col, start, goal, final_obs);
 
     DrawCar(img, final_path.front().pt, final_path.front().yaw);
 
@@ -33,14 +36,17 @@ void DrawWholeMap(int num, int row, int col, const Point2i_type& start,
 
     for (int i = 0; i < final_path.size(); ++i) {
       std::cout << "time: " << i << "  ";
-      DrawGridMap(img, row, col, start, goal, obstacle);
+      DrawGridMap(img, row, col, start, goal, final_obs);
 
       DrawCar(img, final_path[i].pt, final_path[i].yaw);
 
       cv::imshow(title, img);
 
       /* Esc 退出 */
-      if (cv::waitKey(350) == 27) break;
+      if (cv::waitKey(40) == 27) break;
+      while (cv::waitKey(40) == 'p') {
+        if (cv::waitKey(0) == 's') break;
+      }
     }
 
     bool recure_flg = false;
@@ -56,13 +62,13 @@ void DrawWholeMap(int num, int row, int col, const Point2i_type& start,
     if (!recure_flg) break;
   }
 
-  // /* 画网格线 */
-  // DrawGridMap(img, row, col, start, goal, obstacle);
+  /* 画网格线 */
+  DrawGridMap(img, row, col, start, goal, final_obs);
 
-  // /* 画路径点 */
-  // DrawPath(img, final_path);
-  // cv::imshow(title, img);
-  // cv::waitKey(0);
+  /* 画路径点 */
+  DrawPath(img, final_path);
+  cv::imshow(title, img);
+  cv::waitKey(0);
   cv::destroyWindow(title);
   path_cnt = 0;
 }
@@ -121,7 +127,6 @@ void DrawCar(cv::Mat& img, const Point2d_type& central_point, Yaw_type yaw) {
   std::vector<Point2d_type> border =
       GetBorder(central_point, yaw, CarSize::CarLength() - 2 * line_thickness,
                 CarSize::CarWidth() - 2 * line_thickness);
-
   for (int i = 0; i < border.size(); ++i) {
     cv::line(img, SwapPointXY(border[i]),
              SwapPointXY(border[(i + 1) % border.size()]),
